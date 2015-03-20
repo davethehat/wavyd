@@ -1,0 +1,30 @@
+{
+  "name": "wavyd",
+  "version": "1.0.0",
+  "description": "A simple harmonic synthesis and wavetable generation toy",
+  "main": "wavyd.js",
+  "dependencies": {
+    "lodash": "^3.5.0",
+    "speaker": "^0.2.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davethehat/wavyd"
+  },
+  "keywords": [
+    "['sound'",
+    "'synthesis'",
+    "'harmonic'",
+    "'wavetable']"
+  ],
+  "author": "David Harvey",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/davethehat/wavyd/issues"
+  },
+  "homepage": "https://github.com/davethehat/wavyd"
+}

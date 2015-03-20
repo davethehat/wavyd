@@ -1,69 +1,118 @@
+#!/usr/bin/env node
+/*
+ Copyright (c) 2015, David Harvey, Teams and Technology Limited.
 
-/**
- * Code adapted from:
- * http://blogs.msdn.com/b/dawate/archive/2009/06/24/intro-to-audio-programming-part-3-synthesizing-simple-wave-audio-using-c.aspx
- */
+ Permission to use, copy, modify, and/or distribute this software for any purpose with
+ or without fee is hereby granted, provided that the above copyright notice and this
+ permission notice appear in all copies.
 
-var Readable = require('stream').Readable;
+ THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO
+ THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO
+ EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+ IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+'use strict';
+
 var Speaker = require('speaker');
+var parseArgs = require('minimist');
 
-var freq = 441.0;
-var duration = 2.0;
-var MAX_AMPLITUDE = 32760;
+var WaveGenerator = require('./lib/waveGenerator');
+var Wavespec = require('./lib/wavespec');
 
-var spec = process.argv[2];
-if (!spec) {
-  spec = "1:0,0.5:0";
-}
-var dumpTable = process.argv[3] || false;
-
-var partialsAndPhases = spec
-                  .split(',')
-                  .map(function(pair) {
-                    var elems = pair.split(':');
-                    var weight = parseFloat(elems[0]);
-                    var phase = elems[1] === 'PI' ? Math.PI : parseFloat(elems[1]);
-                    if (elems[1].indexOf('PI') > 0) phase = phase * Math.PI;
-                    return [weight, phase];
-                  });
-
-console.log('generating a %dhz wave for %d seconds', freq, duration);
-console.log(partialsAndPhases);
-
-main(freq, duration, partialsAndPhases);
-
-function main(freq, duration, partialsAndPhases) {
-  var sine = new Readable();
-  sine.bitDepth = 16;
-  sine.channels = 2;
-  sine.freq = freq;
-  sine.sampleRate = 44100;
-  sine.samplesGenerated = 0;
-  sine.totalSamplesToGenerate = sine.sampleRate * duration;
-  sine.sampleSize = sine.bitDepth / 8;
-  sine.blockAlign = sine.sampleSize * sine.channels;
-  sine.cycleIncrementForSampleRate = (Math.PI * 2 * sine.freq) / sine.sampleRate;
-  sine.partialsAndPhases = partialsAndPhases;
-
-  sine._read = read;
-
-  sine.pipe(new Speaker());
-
-  if (dumpTable) {
-    dump(partialsAndPhases);
-  }
+var minimistOpts = {
+  default: {
+    'freq'   : 440,
+    'spec'   : '1:0, 0.5:0',
+    'dur'    : 3,
+    'dump'   : false,
+    'plot'   : false,
+    'table'  : 1024,
+    'round'  : true,
+    'scale'  : 2048,
+    'help'   : false
+  },
+  boolean: ['dump', 'round', 'help']
 };
 
-function dump(partialsAndPhases) {
+var help = {
+  'freq'   : 'Audio frequency to play',
+  'spec'   : 'Spec for wave generation - partials weight and phase',
+  'dur'    : 'Audio duration in seconds ',
+  'dump'   : 'If true dump a graphic representation of waveform',
+  'plot'   : 'Style of plot: ascii|png',
+  'table'  : 'Size (#samples) of wavetable to generate if dump is true',
+  'round'  : 'If true, round samples in generated wavetable',
+  'scale'  : 'Scale samples in wavetable by this value',
+  'help'   : 'Show this help message'
+};
+
+var description = 'A little playground for additive harmonic synthesis';
+var specHelp =
+  'Spec argument should be a quoted list of weight:phase pairs w:p\n' +
+  'separated by spaces and/or commas, e.g.\n\n' +
+  '\t"1.0, 0.5:0, 0.25:0.2PI"\n\n' +
+  '(Note that phases are in radians relative to the current partial, and\n' +
+  'that you can use "PI" as a constant in these expressions)';
+
+var args = parseArgs(process.argv.slice(2), minimistOpts);
+
+var plotters = {
+  ascii    : plotAscii,
+  nullFunc : function() {}
+};
+
+function main(opts) {
+
+  if (opts.help) {
+    showHelp();
+    process.exit(0);
+  }
+
+  opts.round = opts.round !== 'false';
+
+  var frequency = opts.freq;
+  var duration = opts.dur;
+  var plot = opts.plot ? plotters[opts.plot] : plotters.nullFunc;
+
+  var wavespec = Wavespec.fromString(opts.spec);
+  var wg = new WaveGenerator(frequency, wavespec, duration, envelope);
+
+  wg.pipe(new Speaker());
+
+  var roundFunc = opts.round? Math.round : function(n) {return n;};
+
+  if (opts.dump) {
+    for (var i = 0; i < opts.table; i++) {
+      var t = i * 2 * Math.PI/opts.table;
+      console.log(roundFunc(wavespec.sampleAtTime(t) * opts.scale));
+    }
+  }
+
+  plot(wavespec);
+}
+
+function showHelp() {
+  console.log('wavyd');
+  console.log(description);
+  Object.keys(help).forEach(showHelpItem);
+  console.log(specHelp);
+
+  function showHelpItem(k) {
+    console.log('%s\t%s (%s)', k, help[k], minimistOpts.default[k]);
+  }
+}
+
+function dump() {
   function f(t) {
-     var val = partialsAndPhases
+     return partialsAndPhases
                 .map(function(value, index) {
                   var w = value[0];
                   var p = (value[1] || 0);
-                  return value[0] * Math.sin((index + 1) * t + p);
+                  return w * Math.sin((index + 1) * t + p);
                 })
                 .reduce(function(accum, value) {return accum + value}, 0);
-    return val;
   }
 
   var samples = [];
@@ -99,69 +148,36 @@ function dump(partialsAndPhases) {
   console.log('}');
 }
 
-function plot(samples) {
+function plotAscii(wavespec) {
   var canvas = [];
   for (var i = 0; i < 33; i++) {
     canvas.push(line(128, i === 16 ? '-' : ' '));
   }
-  for (var j = 0; j < 1024; j+=8) {
-    var scaled = 16 + Math.round(samples[j]/128);
-    canvas[32-scaled][j/8] = '*';
+  for (var j = 0; j < 128; j++) {
+    var sample = wavespec.sampleAtTime(j * 2 * Math.PI/128);
+    var scaled = 16 + Math.round(sample * 16);
+    canvas[32-scaled][j] = '*';
   }
   canvas.forEach(function(l) {
     console.log(l.join(''));
   });
-}
 
-function line(len, char) {
-  var ret = [];
-  while(len--) {
-    ret.push(char);
+  function line(len, char) {
+    var ret = [];
+    while(len--) {
+      ret.push(char);
+    }
+    return ret;
   }
-  return ret;
 }
 
 function envelope(t, totalSamplesToGenerate) {
-  if ( t < totalSamplesToGenerate/2) {
+  if ( t <= totalSamplesToGenerate/2) {
     return 2 * t / totalSamplesToGenerate;
   } else {
     return 2 * (totalSamplesToGenerate - t) / totalSamplesToGenerate;
   }
 }
 
+main(args);
 
-function read (n) {
-  var numSamples = n / this.blockAlign | 0;
-  var buf = new Buffer(numSamples * this.blockAlign);
-  var writeSampleToBuffer = buf['writeInt' + this.bitDepth + 'LE'].bind(buf);
-
-  for (var i = 0; i < numSamples; i++) {
-
-    var currentSampleIndex = this.samplesGenerated + i;
-    var scaledAmplitude = envelope(currentSampleIndex, this.totalSamplesToGenerate) * MAX_AMPLITUDE;
-
-    for (var channel = 0; channel < this.channels; channel++) {
-
-      var offset = (i * this.sampleSize * this.channels) + (channel * this.sampleSize);
-      var sample = this.partialsAndPhases
-                  .map(function(partialWeightAndPhase, partialIndex) {
-                    var w = partialWeightAndPhase[0];
-                    var p = (partialWeightAndPhase[1] || 0);
-                    var t = (partialIndex + 1) * currentSampleIndex * this.cycleIncrementForSampleRate;
-                    return w * Math.sin(t + p);
-                  }.bind(this))
-                  .reduce(function(accum, val) {return accum + val}, 0);
-
-      sample = Math.round(scaledAmplitude * (sample / this.partialsAndPhases.length));
-
-      writeSampleToBuffer(sample, offset);
-    }
-  }
-
-  this.push(buf);
-
-  this.samplesGenerated += numSamples;
-  if (this.samplesGenerated >= this.totalSamplesToGenerate) {
-    this.push(null);
-  }
-}
