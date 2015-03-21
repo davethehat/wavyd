@@ -21,16 +21,25 @@ var parseArgs = require('minimist');
 var WaveGenerator = require('./lib/waveGenerator');
 var Wavespec = require('./lib/wavespec');
 
+var plotPng = require('./lib/plotPng');
+
+
 var minimistOpts = {
   default: {
     'freq'   : 440,
     'spec'   : '1:0, 0.5:0',
     'dur'    : 3,
+
     'dump'   : false,
-    'plot'   : false,
     'table'  : 1024,
     'round'  : true,
     'scale'  : 2048,
+
+    'plot'   : false,
+    'pn'     : 'plot.png',
+    'pw'     : 160*4,
+    'ph'     : 90*4,
+    'pm'     : 4,
     'help'   : false
   },
   boolean: ['dump', 'round', 'help']
@@ -39,12 +48,19 @@ var minimistOpts = {
 var help = {
   'freq'   : 'Audio frequency to play',
   'spec'   : 'Spec for wave generation - partials weight and phase',
-  'dur'    : 'Audio duration in seconds ',
-  'dump'   : 'If true dump a graphic representation of waveform',
-  'plot'   : 'Style of plot: ascii|png',
-  'table'  : 'Size (#samples) of wavetable to generate if dump is true',
-  'round'  : 'If true, round samples in generated wavetable',
+  'dur'    : 'Audio duration in seconds',
+
+  'dump'   : 'If given, write wavetable data to stdout',
+  'table'  : 'Size (#samples) of wavetable to generate',
+  'round'  : 'If true, round samples in wavetable to integer values',
   'scale'  : 'Scale samples in wavetable by this value',
+
+  'plot'   : 'If given, generate a graphic representation of waveform: ascii|png',
+  'pn'     : 'For png plot, output filename',
+  'pw'     : 'For png plot, pixel width of image',
+  'ph'     : 'For png plot, pixel height of image',
+  'pm'     : 'For png plot, inner margin of image',
+
   'help'   : 'Show this help message'
 };
 
@@ -60,6 +76,7 @@ var args = parseArgs(process.argv.slice(2), minimistOpts);
 
 var plotters = {
   ascii    : plotAscii,
+  png      : plotPng,
   nullFunc : function() {}
 };
 
@@ -90,7 +107,7 @@ function main(opts) {
     }
   }
 
-  plot(wavespec);
+  plot(wavespec, opts);
 }
 
 function showHelp() {
@@ -102,50 +119,6 @@ function showHelp() {
   function showHelpItem(k) {
     console.log('%s\t%s (%s)', k, help[k], minimistOpts.default[k]);
   }
-}
-
-function dump() {
-  function f(t) {
-     return partialsAndPhases
-                .map(function(value, index) {
-                  var w = value[0];
-                  var p = (value[1] || 0);
-                  return w * Math.sin((index + 1) * t + p);
-                })
-                .reduce(function(accum, value) {return accum + value}, 0);
-  }
-
-  var samples = [];
-  var max = 0;
-  var min = 0;
-  for (var i = 0; i < 1024; i++) {
-    var v = f(i * (2*Math.PI/1024));
-    samples.push(v);
-    max = Math.max(max, v);
-    min = Math.min(min, v);
-  }
-
-  console.log(max, min);
-  max = Math.max(max, -min);
-
-  samples = samples.map(function(s) {
-    return Math.round(2048 * (s/max));
-  });
-
-  var sep = line(126,'=').join('');
-  console.log('/*' + sep);
-  console.log('Generated wavetable');
-  console.log('Harmonic, weight, phase');
-  partialsAndPhases.forEach(function (pp,index) {
-    console.log("%d %s %s", index, pp[0].toFixed(4), pp[1].toFixed(5));
-  });
-  console.log(sep + '==');
-  plot(samples);
-  console.log(sep + '*/\n\n');
-
-  console.log('const int16_t wave_table_X[1024] PROGMEM = {\\');
-  console.log(samples.join(',\\\n'));
-  console.log('}');
 }
 
 function plotAscii(wavespec) {
