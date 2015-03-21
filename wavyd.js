@@ -88,6 +88,7 @@ function main(opts) {
   }
 
   opts.round = opts.round !== 'false';
+  var roundFunc = opts.round? Math.round : function(n) {return n;};
 
   var frequency = opts.freq;
   var duration = opts.dur;
@@ -95,10 +96,7 @@ function main(opts) {
 
   var wavespec = Wavespec.fromString(opts.spec);
   var wg = new WaveGenerator(frequency, wavespec, duration, envelope);
-
   wg.pipe(new Speaker());
-
-  var roundFunc = opts.round? Math.round : function(n) {return n;};
 
   if (opts.dump) {
     for (var i = 0; i < opts.table; i++) {
@@ -112,12 +110,19 @@ function main(opts) {
 
 function showHelp() {
   console.log('wavyd');
+  console.log('\n');
+
   console.log(description);
+  console.log('\n');
+
+  console.log('Args (with defaults):');
   Object.keys(help).forEach(showHelpItem);
+  console.log('\n');
+
   console.log(specHelp);
 
   function showHelpItem(k) {
-    console.log('%s\t%s (%s)', k, help[k], minimistOpts.default[k]);
+    console.log('--%s\t%s (%s)', k, help[k], minimistOpts.default[k]);
   }
 }
 
