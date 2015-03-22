@@ -16,19 +16,20 @@ All in package.json, except for node-canvas (for png support), which requires an
 Arguments (with defaults):
 
 ```
---freq  Audio frequency to play (440)
---spec  Spec for wave generation - partials weight and phase (1:0, 0.5:0)
---dur   Audio duration in seconds (3)
---dump  If given, write wavetable data to stdout (false)
---table Size (#samples) of wavetable to generate (1024)
---round If true, round samples in wavetable to integer values (true)
---scale Scale samples in wavetable by this value (2048)
---plot  If given, generate a graphic representation of waveform: ascii|png (false)
---pn    For png plot, output filename (plot.png)
---pw    For png plot, pixel width of image (640)
---ph    For png plot, pixel height of image (360)
---pm    For png plot, inner margin of image (4)
---help  Show this help message (false)
+--freq    Audio frequency to play (440)
+--spec    Spec for wave generation - partials weight and phase (1:0, 0.5:0)
+--dur     Audio duration in seconds (3)
+--silent  Suppress audio preview of wave
+--dump    If given, write wavetable data to stdout (false)
+--table   Size (#samples) of wavetable to generate (1024)
+--round   If true, round samples in wavetable to integer values (true)
+--scale   Scale samples in wavetable by this value (2048)
+--plot    If given, generate a graphic representation of waveform: ascii|png (false)
+--pn      For png plot, output filename (plot.png)
+--pw      For png plot, pixel width of image (640)
+--ph      For png plot, pixel height of image (360)
+--pm      For png plot, inner margin of image (4)
+--help    Show this help message (false)
 ```
 
 Spec argument should be a quoted list of weight:phase pairs w:p

@@ -29,6 +29,7 @@ var minimistOpts = {
     'freq'   : 440,
     'spec'   : '1:0, 0.5:0',
     'dur'    : 3,
+    'silent' : false,
 
     'dump'   : false,
     'table'  : 1024,
@@ -42,13 +43,14 @@ var minimistOpts = {
     'pm'     : 4,
     'help'   : false
   },
-  boolean: ['dump', 'round', 'help']
+  boolean: ['dump', 'round', 'silent', 'help']
 };
 
 var help = {
   'freq'   : 'Audio frequency to play',
   'spec'   : 'Spec for wave generation - partials weight and phase',
   'dur'    : 'Audio duration in seconds',
+  'silent' : 'Suppress audio preview of wave',
 
   'dump'   : 'If given, write wavetable data to stdout',
   'table'  : 'Size (#samples) of wavetable to generate',
@@ -75,9 +77,9 @@ var specHelp =
 var args = parseArgs(process.argv.slice(2), minimistOpts);
 
 var plotters = {
-  ascii    : plotAscii,
-  png      : plotPng,
-  nullFunc : function() {}
+  ascii         : plotAscii,
+  png           : plotPng,
+  noPlotterFor  : function(plotter) { return function() {console.error('No plotter for %s', plotter);}}
 };
 
 function main(opts) {
@@ -87,25 +89,25 @@ function main(opts) {
     process.exit(0);
   }
 
-  opts.round = opts.round !== 'false';
-  var roundFunc = opts.round? Math.round : function(n) {return n;};
-
-  var frequency = opts.freq;
-  var duration = opts.dur;
-  var plot = opts.plot ? plotters[opts.plot] : plotters.nullFunc;
-
   var wavespec = Wavespec.fromString(opts.spec);
-  var wg = new WaveGenerator(frequency, wavespec, duration, envelope);
-  wg.pipe(new Speaker());
+
+  if (!opts.silent) {
+    var wg = new WaveGenerator(opts.freq, wavespec, opts.dur, envelope);
+    wg.pipe(new Speaker());
+  }
 
   if (opts.dump) {
+    var roundFunc = opts.round? Math.round : function(n) {return n;};
     for (var i = 0; i < opts.table; i++) {
       var t = i * 2 * Math.PI/opts.table;
       console.log(roundFunc(wavespec.sampleAtTime(t) * opts.scale));
     }
   }
 
-  plot(wavespec, opts);
+  if (opts.plot) {
+    var plot = plotters[opts.plot] || plotters.noPlotterFor(opts.plot);
+    plot(wavespec, opts);
+  }
 }
 
 function showHelp() {
