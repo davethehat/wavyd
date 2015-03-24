@@ -10,7 +10,7 @@ var template = [
 "#include <avr/pgmspace.h>",
 "",
 "const int16_t wave_table[{table}] PROGMEM = {\\",
-"*{value},",
+"*{value}{-,}",
 "}"
 ];
 

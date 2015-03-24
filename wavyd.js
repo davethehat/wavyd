@@ -184,11 +184,21 @@ function envelope(t, totalSamplesToGenerate) {
 
 function emitLine(line, opts) {
   var output;
-  output = line.replace(/\{([a-z]+)\}/g, function(match, field) {
+  output = line.replace(/\{([^{}]+)\}/g, function(match, field) {
     if (field === 'date') {
       return new Date().toISOString();
     }
-    return opts[field];
+
+    var s = opts[field] || field;
+    if (field[0] === '-') {
+      field = field.slice(1);
+      s = opts[field] || field;
+      if (opts.index === opts.data.length - 1) {
+        s = "";
+      }
+    }
+
+    return s;
   });
   console.log(output);
 }
@@ -196,7 +206,7 @@ function emitLine(line, opts) {
 function emitData(line, data) {
   line = line.slice(1);
   data.forEach(function(value, index) {
-    emitLine(line, {value: value, index: index});
+    emitLine(line, {value: value, index: index, data: data});
   })
 }
 
