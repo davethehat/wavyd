@@ -17,6 +17,7 @@
 
 var Speaker = require('speaker');
 var parseArgs = require('minimist');
+var _ = require('lodash');
 
 var WaveGenerator = require('./lib/waveGenerator');
 var Wavespec = require('./lib/wavespec');
@@ -41,6 +42,9 @@ var minimistOpts = {
     'pw'     : 160*4,
     'ph'     : 90*4,
     'pm'     : 4,
+
+    'preset' : false,
+
     'help'   : false
   },
   boolean: ['dump', 'round', 'silent', 'help']
@@ -62,6 +66,8 @@ var help = {
   'pw'     : 'For png plot, pixel width of image',
   'ph'     : 'For png plot, pixel height of image',
   'pm'     : 'For png plot, inner margin of image',
+
+  'preset' : 'Preset and template file',
 
   'help'   : 'Show this help message'
 };
@@ -89,6 +95,12 @@ function main(opts) {
     process.exit(0);
   }
 
+  if (opts.preset) {
+    var preset = require(opts.preset);
+    opts = _.defaults({}, preset.opts, opts);
+    opts.template = preset.template;
+  }
+
   var wavespec = Wavespec.fromString(opts.spec);
 
   if (!opts.silent) {
@@ -96,17 +108,28 @@ function main(opts) {
     wg.pipe(new Speaker());
   }
 
-  if (opts.dump) {
-    var roundFunc = opts.round? Math.round : function(n) {return n;};
-    for (var i = 0; i < opts.table; i++) {
-      var t = i * 2 * Math.PI/opts.table;
-      console.log(roundFunc(wavespec.sampleAtTime(t) * opts.scale));
-    }
-  }
-
   if (opts.plot) {
     var plot = plotters[opts.plot] || plotters.noPlotterFor(opts.plot);
     plot(wavespec, opts);
+  }
+
+  if (opts.dump) {
+    opts.template = opts.template || ['*{value}'];
+
+    var data = [];
+    var roundFunc = opts.round? Math.round : function(n) {return n;};
+    for (var i = 0; i < opts.table; i++) {
+      var t = i * 2 * Math.PI/opts.table;
+      data.push(roundFunc(wavespec.sampleAtTime(t) * opts.scale));
+    }
+
+    opts.template.forEach(function (line) {
+      if (line[0] === '*') {
+        emitData(line, data);
+      } else {
+        emitLine(line, opts);
+      }
+    });
   }
 }
 
@@ -157,6 +180,24 @@ function envelope(t, totalSamplesToGenerate) {
   } else {
     return 2 * (totalSamplesToGenerate - t) / totalSamplesToGenerate;
   }
+}
+
+function emitLine(line, opts) {
+  var output;
+  output = line.replace(/\{([a-z]+)\}/g, function(match, field) {
+    if (field === 'date') {
+      return new Date().toISOString();
+    }
+    return opts[field];
+  });
+  console.log(output);
+}
+
+function emitData(line, data) {
+  line = line.slice(1);
+  data.forEach(function(value, index) {
+    emitLine(line, {value: value, index: index});
+  })
 }
 
 main(args);
