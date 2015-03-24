@@ -67,7 +67,7 @@ var help = {
   'ph'     : 'For png plot, pixel height of image',
   'pm'     : 'For png plot, inner margin of image',
 
-  'preset' : 'Preset and template file',
+  'preset' : 'If given, a path to a preset/template file',
 
   'help'   : 'Show this help message'
 };
