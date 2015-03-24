@@ -75,6 +75,7 @@ module.exports = {
 ```
 
 Note:
+
 1. The file is a javascript source file, exporting via module.exports a template and a set of options
 2. The options overwrite any additional or default options passed to wavyd
 3. The template is an array of strings, that will be written to the output with values substituted
