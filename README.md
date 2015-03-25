@@ -4,14 +4,20 @@ the awesome [Open.Theremin](http://www.gaudi.ch/OpenTheremin/) project, but then
 
 ## installation
 ```
-npm install wavyd
+npm install -g wavyd
 ```
 
 ## dependencies
+nodejs (tested with v0.10.n and 0.12.n)
+
 All in package.json, except for node-canvas (for png support), which requires an installation of Cairo. Check
 [here](https://www.npmjs.com/package/canvas) for more information.
 
 ## usage
+
+```
+$ wavyd <arguments>
+```
 
 Arguments (with defaults):
 
@@ -42,6 +48,12 @@ separated by spaces and/or commas, e.g.
 
 (Note that phases are in radians relative to the current partial, and
 that you can use "PI" as a constant in these expressions)
+
+To write output to a wave file, redirect stdout as follows
+
+```
+$ wavyd --preset ./MyCPPTemplate.js --silent > wavetable.cpp
+```
 
 ## Preset/template file
 A preset/template file has the following form, which should be relatively self-explanatory:
