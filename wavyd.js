@@ -192,7 +192,7 @@ function emitLine(line, opts) {
     var s = opts[field] || field;
     if (field[0] === '-') {
       field = field.slice(1);
-      s = opts[field] || field;
+      s = (typeof opts[field] !== 'undefined') ? opts[field] field;
       if (opts.index === opts.data.length - 1) {
         s = "";
       }
