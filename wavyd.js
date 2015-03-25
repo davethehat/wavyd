@@ -189,7 +189,7 @@ function emitLine(line, opts) {
       return new Date().toISOString();
     }
 
-    var s = opts[field] || field;
+    var s = (typeof opts[field] !== 'undefined') ? opts[field] : field;
     if (field[0] === '-') {
       field = field.slice(1);
       s = (typeof opts[field] !== 'undefined') ? opts[field] : field;
