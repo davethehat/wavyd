@@ -34,8 +34,8 @@ var minimistOpts = {
 
     'dump'   : false,
     'table'  : 1024,
-    'round'  : true,
-    'scale'  : 2048,
+    'round'  : false,
+    'scale'  : 1.0,
 
     'plot'   : false,
     'pn'     : 'plot.png',

@@ -1,6 +1,6 @@
 {
   "name": "wavyd",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A simple harmonic synthesis and wavetable generation toy",
   "main": "wavyd.js",
   "dependencies": {

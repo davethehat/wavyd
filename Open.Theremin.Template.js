@@ -14,12 +14,13 @@ var template = [
 "}"
 ];
 
+// 12-bit DAC in Open.Theremin accepts values -2048 ... 2047, hence the scale
 module.exports = {
   opts: {
     dump:  true,
     table: 1024,
     round: true,
-    scale: 2048
+    scale: 2047
   },
   template: template
 };

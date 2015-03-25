@@ -22,8 +22,8 @@ Arguments (with defaults):
 --silent  Suppress audio preview of wave
 --dump    If given, write wavetable data to stdout (false)
 --table   Size (#samples) of wavetable to generate (1024)
---round   If true, round samples in wavetable to integer values (true)
---scale   Scale samples in wavetable by this value (2048)
+--round   If true, round samples in wavetable to integer values (false)
+--scale   Scale samples in wavetable by this value (1.0)
 --plot    If given, generate a graphic representation of waveform: ascii|png (false)
 --pn      For png plot, output filename (plot.png)
 --pw      For png plot, pixel width of image (640)
