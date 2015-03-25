@@ -1,6 +1,6 @@
 {
   "name": "wavyd",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A simple harmonic synthesis and wavetable generation toy",
   "main": "wavyd.js",
   "dependencies": {
@@ -9,7 +9,7 @@
     "speaker": "^0.2.4"
   },
   "devDependencies": {},
-  "bin" : "./wavyd",
+  "bin" : {"wavyd": "./wavyd.js"},
   "scripts": {
     "test": "echo \"No test specified\" && exit 1"
   },
