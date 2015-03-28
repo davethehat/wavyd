@@ -20,14 +20,20 @@ var parseArgs = require('minimist');
 var _ = require('lodash');
 
 var WaveGenerator = require('./lib/waveGenerator');
-var Wavespec = require('./lib/wavespec');
+var HarmonicsWavespec = require('./lib/harmonicsWavespec');
+var EtherwaveWavespec = require('./lib/etherwaveWavespec');
 
 var plotPng = require('./lib/plotPng');
 
+var typeParamToWavespecFactory = {
+  ew: EtherwaveWavespec,
+  hs: HarmonicsWavespec
+};
 
 var minimistOpts = {
   default: {
     'freq'   : 440,
+    'type'   : 'hs',
     'spec'   : '1:0, 0.5:0',
     'dur'    : 3,
     'silent' : false,
@@ -52,7 +58,9 @@ var minimistOpts = {
 
 var help = {
   'freq'   : 'Audio frequency to play',
-  'spec'   : 'Spec for wave generation - partials weight and phase',
+  'type'   : 'Wave type: hs (harmonic synthesis) || ew (etherwave)',
+  'spec'   : 'Specification for wave (depends on type, see below)',
+
   'dur'    : 'Audio duration in seconds',
   'silent' : 'Suppress audio preview of wave',
 
@@ -74,11 +82,19 @@ var help = {
 
 var description = 'A little playground for additive harmonic synthesis';
 var specHelp =
-  'Spec argument should be a quoted list of weight:phase pairs w:p\n' +
+  'Spec argument depends on the --type argument passed. For hs (harmonic\n' +
+  'synthesis) it should be a quoted list of weight:phase pairs w:p \n' +
   'separated by spaces and/or commas, e.g.\n\n' +
-  '\t"1.0, 0.5:0, 0.25:0.2PI"\n\n' +
+  '\t"1:0, 0.5:0, 0.25:0.2PI"\n\n' +
   '(Note that phases are in radians relative to the current partial, and\n' +
-  'that you can use "PI" as a constant in these expressions)';
+  'that you can use "PI" as a constant in these expressions)\n\n' +
+  'For ew (etherwave) it should be a quoted string with values for wf \n' +
+  '(waveform offset) and br (brightness) as follows:\n\n' +
+  '\t"wf:55, br:140"\n\n' +
+  'Both wf and br values should be 0-255.\n\n' +
+  'For information on the algorithm, see Thierry Frankel\'s paper on\n' +
+  'implementing the generator in native arduino code, at\n\n' +
+  '\thttp://theremin.tf/wp-content/uploads/2015/03/wavegen.pdf';
 
 var args = parseArgs(process.argv.slice(2), minimistOpts);
 
@@ -101,7 +117,8 @@ function main(opts) {
     opts.template = preset.template;
   }
 
-  var wavespec = Wavespec.fromString(opts.spec);
+  var wavespecFactory = typeParamToWavespecFactory[opts.type] || HarmonicsWavespec;
+  var wavespec = wavespecFactory.fromString(opts.spec);
 
   if (!opts.silent) {
     var wg = new WaveGenerator(opts.freq, wavespec, opts.dur, envelope);

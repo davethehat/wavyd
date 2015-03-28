@@ -23,7 +23,8 @@ Arguments (with defaults):
 
 ```
 --freq    Audio frequency to play (440)
---spec    Spec for wave generation - partials weight and phase (1:0, 0.5:0)
+--type	  Wave type: hs (harmonic synthesis) || ew (etherwave) (hs)
+--spec    Specification for wave (depends on type, see below)
 --dur     Audio duration in seconds (3)
 --silent  Suppress audio preview of wave
 --dump    If given, write wavetable data to stdout (false)
@@ -39,15 +40,29 @@ Arguments (with defaults):
 --help    Show this help message (false)
 ```
 
-Spec argument should be a quoted list of weight:phase pairs w:p
+Spec argument depends on the --type argument passed. For __hs__ (harmonic
+synthesis) it should be a quoted list of weight:phase pairs w:p
 separated by spaces and/or commas, e.g.
 
 ```
-"1.0, 0.5:0, 0.25:0.2PI"
+"1:0, 0.5:0, 0.25:0.2PI"
 ```
 
 (Note that phases are in radians relative to the current partial, and
 that you can use "PI" as a constant in these expressions)
+
+For __ew__ (etherwave) it should be a quoted string with values for wf
+(waveform offset) and br (brightness) as follows:
+
+```
+"wf:55, br:140"
+```
+
+Both wf and br values should be 0-255.
+
+For information on the algorithm, see
+[Thierry Frankel's paper](http://theremin.tf/wp-content/uploads/2015/03/wavegen.pdf)
+on implementing the generator in native Arduino code.
 
 To write output to a wave file, redirect stdout as follows
 
@@ -63,9 +78,8 @@ var template = [
 "/*===========================================",
 "Wavetable for Open.Theremin",
 "Generated at {date} by wavyd",
-"Parameters(partial weights/phases)",
-"",
-"{spec}",
+"Type: {type}",
+"Spec: {spec}",
 "============================================*/",
 "",
 "#include <avr/pgmspace.h>",
