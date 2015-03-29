@@ -10,8 +10,19 @@ npm install -g wavyd
 ## dependencies
 nodejs (tested with v0.10.n and 0.12.n)
 
-All in package.json, except for node-canvas (for png support), which requires an installation of Cairo. Check
-[here](https://www.npmjs.com/package/canvas) for more information.
+On ubuntu, installation of the audio package requires libasound2-dev: install using
+
+```
+sudu apt-get install libasound2-dev
+```
+
+On windows, the situation is a bit more complicated. The __speaker__ package used for audio output is built using
+[node-gyp](https://github.com.TooTallNate/node-gyp), which requires both python and (to compile the binary extensions
+to node) a MS Visual Studio C++ installation. Follow the instructions on the node-gyp github page before installing
+wavyd.
+
+Otherwise, all dependencies arte defined in package.json, except for node-canvas (for png support), which requires
+an installation of Cairo. Check [here](https://www.npmjs.com/package/canvas) for more information.
 
 ## usage
 
